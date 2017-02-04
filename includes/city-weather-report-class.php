@@ -20,7 +20,20 @@ class City_Weather_Report_Widget extends WP_Widget {
 	 */
 	public function widget( $args, $instance ) {
 		// outputs the content of the widget
+		// Get values
+		$city = $instance['city'];
+		$state = $instance['state'];
+		$options = array(
+			'temp_type'         => $instance['temp_type'],
+			'use_geolocation'   => $instance['use_geolocation'] ? true : false,
+			'show_humidity'     => $instance['show_humidity'] ? true : false
+		);
 
+		echo $args['before_widget'];
+
+		echo $this->getWeather($city, $state, $options);
+
+		echo $args['after_widget'];
 	}
 
 	/**
@@ -103,4 +116,26 @@ class City_Weather_Report_Widget extends WP_Widget {
 		return $instance;
 	}
 
+	// Get And Display Weather
+	function getWeather($city, $state, $options) {
+		$json_string = file_get_contents('http://api.wunderground.com/api/8abaf1d660df37ed/geolookup/conditions/q/' . $state . '/' . $city . '.json');
+//		$json_string = file_get_contents('http://api.wunderground.com/api/8abaf1d660df37ed/conditions/q/CA/San_Francisco.json');
+		$parsed_json = json_decode($json_string);
+		$location = $parsed_json->{'location'}->{'city'} . ', ' . $parsed_json->{'location'}->{'state'};
+		$weather = $parsed_json->{'current_observation'}->{'weather'};
+		$icon_url = $parsed_json->{'current_observation'}->{'icon_url'};
+		$temp_f = $parsed_json->{'current_observation'}->{'temp_f'};
+		$temp_c = $parsed_json->{'current_observation'}->{'temp_c'};
+		$relative_humidity = $parsed_json->{'current_observation'}->{'relative_humidity'};
+		?>
+			<div class="city-weather">
+				<h3><?php echo ${location}; ?></h3>
+				<h1><?php echo ${temp_c}; ?>°C</h1>
+				<img src="<?php echo ${icon_url}; ?>" alt="<?php echo ${weather}; ?>"> <?php echo ${weather}; ?>
+				<div>
+					<strong>Relative Humidity: <?php echo ${relative_humidity}; ?></strong>
+				</div>
+			</div>
+		<?php
+	}
 }
