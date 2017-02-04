@@ -63,7 +63,7 @@ class City_Weather_Report_Widget extends WP_Widget {
 						value="<?php echo esc_attr($city) ?>" />
 			</p>
 			<p>
-				<label for="<?php echo $this->get_field_id( 'state' ); ?>"><?php _e('State:'); ?></label>
+				<label for="<?php echo $this->get_field_id( 'state' ); ?>"><?php _e('Country Code:'); ?></label>
 				<input type="text" class="widefat"
 				       id="<?php echo $this->get_field_id( 'state' ); ?>"
 				       name="<?php echo $this->get_field_name( 'state' ); ?>"
@@ -118,10 +118,20 @@ class City_Weather_Report_Widget extends WP_Widget {
 
 	// Get And Display Weather
 	function getWeather($city, $state, $options) {
+		// GeoPlugin Init
+		$geoplugin = new geoPlugin();
+		$geoplugin->locate('86.12.242.36');
+
+		// Check to see if GeoPlugin enabled
+		if($options['use_geolocation']) {
+			$city = $geoplugin->city;
+			$state = $geoplugin->countryCode;
+		}
+
 		$json_string = file_get_contents('http://api.wunderground.com/api/8abaf1d660df37ed/geolookup/conditions/q/' . $state . '/' . $city . '.json');
 //		$json_string = file_get_contents('http://api.wunderground.com/api/8abaf1d660df37ed/conditions/q/CA/San_Francisco.json');
 		$parsed_json = json_decode($json_string);
-		$location = $parsed_json->{'location'}->{'city'} . ', ' . $parsed_json->{'location'}->{'state'};
+		$location = $parsed_json->{'location'}->{'city'} . ', ' . $parsed_json->{'location'}->{'country_name'};
 		$weather = $parsed_json->{'current_observation'}->{'weather'};
 		$icon_url = $parsed_json->{'current_observation'}->{'icon_url'};
 		$temp_f = $parsed_json->{'current_observation'}->{'temp_f'};
@@ -130,11 +140,19 @@ class City_Weather_Report_Widget extends WP_Widget {
 		?>
 			<div class="city-weather">
 				<h3><?php echo ${location}; ?></h3>
-				<h1><?php echo ${temp_c}; ?>°C</h1>
+				<?php if($options['temp_type'] == 'Fahrenheit') : ?>
+					<h1><?php echo ${temp_f}; ?>°F</h1>
+				<?php elseif($options['temp_type'] == 'Celsius') : ?>
+					<h1><?php echo ${temp_c}; ?>°C</h1>
+				<?php elseif($options['temp_type'] == 'Both') : ?>
+					<h1><?php echo ${temp_f}; ?>°F / <?php echo ${temp_c}; ?>°C</h1>
+				<?php endif; ?>
 				<img src="<?php echo ${icon_url}; ?>" alt="<?php echo ${weather}; ?>"> <?php echo ${weather}; ?>
-				<div>
-					<strong>Relative Humidity: <?php echo ${relative_humidity}; ?></strong>
-				</div>
+				<?php if($options['show_humidity']) : ?>
+					<div>
+						<strong>Relative Humidity: <?php echo ${relative_humidity}; ?></strong>
+					</div>
+				<?php endif; ?>
 			</div>
 		<?php
 	}
