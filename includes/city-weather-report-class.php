@@ -148,7 +148,7 @@ class City_Weather_Report_Widget extends WP_Widget {
 			$state = $geoplugin->countryCode;
 		}
 
-		if($options['api_key']) {
+		if($api_key) {
 			$json_current_weather = file_get_contents('http://api.wunderground.com/api/' . $api_key . '/geolookup/conditions/forecast/q/' . $state . '/' . $city . '.json');
 			$parsed_json = json_decode($json_current_weather);
 
