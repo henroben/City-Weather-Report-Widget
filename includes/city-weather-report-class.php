@@ -159,7 +159,16 @@ class City_Weather_Report_Widget extends WP_Widget {
 		}
 
 		if($api_key) {
-			$json_current_weather = file_get_contents('http://api.wunderground.com/api/' . $api_key . '/geolookup/conditions/forecast/q/' . $state . '/' . $city . '.json');
+			// set up request url first
+			$request_url = 'http://api.wunderground.com/api/' . $api_key . '/geolookup/conditions/forecast/q/' . $state . '/' . $city . '.json';
+			// Check cache for url
+			$json_current_weather = get_transient($request_url);
+			// If not in case, make request
+			if($json_current_weather === false) {
+				$json_current_weather = file_get_contents($request_url);
+				set_transient($request_url, $json_current_weather, 3600);
+			}
+			// Parse request
 			$parsed_json = json_decode($json_current_weather);
 
 			// Get Current Observations And Location
