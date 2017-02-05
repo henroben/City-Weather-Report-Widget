@@ -2,7 +2,7 @@
 /**
  * Plugin Name: City Weather Report
  * Description: Show weather report for specified city, or users geo-location
- * Version: 1.0
+ * Version: 1.1
  * Author: Benjamin Mercer
  *
  **/
