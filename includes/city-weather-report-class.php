@@ -29,7 +29,8 @@ class City_Weather_Report_Widget extends WP_Widget {
 			'use_geolocation'   => $instance['use_geolocation'] ? true : false,
 			'show_humidity'     => $instance['show_humidity'] ? true : false,
 			'show_realfeel'     => $instance['show_realfeel'] ? true : false,
-			'show_forecast'     => $instance['show_forecast'] ? true : false
+			'show_forecast'     => $instance['show_forecast'] ? true : false,
+			'cache_expire'     => $instance['cache_expire'] ? true : false
 		);
 
 		echo $args['before_widget'];
@@ -52,7 +53,9 @@ class City_Weather_Report_Widget extends WP_Widget {
 		$show_realfeel = $instance['show_realfeel'];
 		$show_humidity = $instance['show_humidity'];
 		$show_forecast = $instance['show_forecast'];
+		$cache_expire = $instance['cache_expire'];
 		$temp_type = $instance['temp_type'];
+
 		?>
 			<p>
 				<input type="checkbox" class="checkbox"
@@ -120,6 +123,13 @@ class City_Weather_Report_Widget extends WP_Widget {
 					   name="<?php echo $this->get_field_name( 'show_forecast' ); ?>" />
 				<label for="<?php echo $this->get_field_id( 'show_forecast' ); ?>">Show 3 Day Forecast</label>
 			</p>
+			<p>
+				<label for="<?php echo $this->get_field_id( 'cache_expire' ); ?>"><?php _e('Cache Expiry In Seconds:'); ?></label>
+				<input type="text" class="widefat"
+				       id="<?php echo $this->get_field_id( 'cache_expire' ); ?>"
+				       name="<?php echo $this->get_field_name( 'cache_expire' ); ?>"
+				       value="<?php echo esc_attr($cache_expire) ?>" />
+			</p>
 		<?php
 	}
 
@@ -140,6 +150,7 @@ class City_Weather_Report_Widget extends WP_Widget {
 			'show_realfeel' => (!empty($new_instance['show_realfeel'])) ? strip_tags($new_instance['show_realfeel']) : '',
 			'show_humidity' => (!empty($new_instance['show_humidity'])) ? strip_tags($new_instance['show_humidity']) : '',
 			'show_forecast' => (!empty($new_instance['show_forecast'])) ? strip_tags($new_instance['show_forecast']) : '',
+			'cache_expire' => (!empty($new_instance['cache_expire'])) ? strip_tags($new_instance['cache_expire']) : '',
 			'temp_type' => (!empty($new_instance['temp_type'])) ? strip_tags($new_instance['temp_type']) : '',
 		);
 
@@ -165,8 +176,9 @@ class City_Weather_Report_Widget extends WP_Widget {
 			$json_current_weather = get_transient($request_url);
 			// If not in case, make request
 			if($json_current_weather === false) {
+				echo 'api request not cached, making new request.';
 				$json_current_weather = file_get_contents($request_url);
-				set_transient($request_url, $json_current_weather, 3600);
+				set_transient($request_url, $json_current_weather, $options['cache_expire']);
 			}
 			// Parse request
 			$parsed_json = json_decode($json_current_weather);
