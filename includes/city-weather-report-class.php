@@ -28,6 +28,7 @@ class City_Weather_Report_Widget extends WP_Widget {
 			'temp_type'         => $instance['temp_type'],
 			'use_geolocation'   => $instance['use_geolocation'] ? true : false,
 			'show_humidity'     => $instance['show_humidity'] ? true : false,
+			'show_realfeel'     => $instance['show_realfeel'] ? true : false,
 			'show_forecast'     => $instance['show_forecast'] ? true : false
 		);
 
@@ -48,6 +49,7 @@ class City_Weather_Report_Widget extends WP_Widget {
 		$state = $instance['state'];
 		$api_key = $instance['api_key'];
 		$use_geolocation = $instance['use_geolocation'];
+		$show_realfeel = $instance['show_realfeel'];
 		$show_humidity = $instance['show_humidity'];
 		$show_forecast = $instance['show_forecast'];
 		$temp_type = $instance['temp_type'];
@@ -99,6 +101,13 @@ class City_Weather_Report_Widget extends WP_Widget {
 			</p>
 			<p>
 				<input type="checkbox" class="checkbox"
+					<?php checked( $instance['show_realfeel'], 'on'); ?>
+					   id="<?php echo $this->get_field_id( 'show_realfeel' ); ?>"
+					   name="<?php echo $this->get_field_name( 'show_realfeel' ); ?>" />
+				<label for="<?php echo $this->get_field_id( 'show_realfeel' ); ?>">Show Real Feel</label>
+			</p>
+			<p>
+				<input type="checkbox" class="checkbox"
 					<?php checked( $instance['show_humidity'], 'on'); ?>
 					   id="<?php echo $this->get_field_id( 'show_humidity' ); ?>"
 					   name="<?php echo $this->get_field_name( 'show_humidity' ); ?>" />
@@ -128,6 +137,7 @@ class City_Weather_Report_Widget extends WP_Widget {
 			'state' => (!empty($new_instance['state'])) ? strip_tags($new_instance['state']) : '',
 			'api_key' => (!empty($new_instance['api_key'])) ? strip_tags($new_instance['api_key']) : '',
 			'use_geolocation' => (!empty($new_instance['use_geolocation'])) ? strip_tags($new_instance['use_geolocation']) : '',
+			'show_realfeel' => (!empty($new_instance['show_realfeel'])) ? strip_tags($new_instance['show_realfeel']) : '',
 			'show_humidity' => (!empty($new_instance['show_humidity'])) ? strip_tags($new_instance['show_humidity']) : '',
 			'show_forecast' => (!empty($new_instance['show_forecast'])) ? strip_tags($new_instance['show_forecast']) : '',
 			'temp_type' => (!empty($new_instance['temp_type'])) ? strip_tags($new_instance['temp_type']) : '',
@@ -157,7 +167,9 @@ class City_Weather_Report_Widget extends WP_Widget {
 			$weather = $parsed_json->{'current_observation'}->{'weather'};
 			$icon = $parsed_json->{'current_observation'}->{'icon'};
 			$temp_f = $parsed_json->{'current_observation'}->{'temp_f'};
+			$feelslike_f = $parsed_json->{'current_observation'}->{'feelslike_f'};
 			$temp_c = $parsed_json->{'current_observation'}->{'temp_c'};
+			$feelslike_c = $parsed_json->{'current_observation'}->{'feelslike_c'};
 			$relative_humidity = $parsed_json->{'current_observation'}->{'relative_humidity'};
 
 			// Get Next 3 Day Forecast
@@ -187,11 +199,11 @@ class City_Weather_Report_Widget extends WP_Widget {
 			$forecastThree['temp_low_c'] = $threeDayForecast[3]->{'low'}->{'celsius'};
 			$forecastThree['icon'] = $threeDayForecast[3]->{'icon'};
 			?>
-			<div class="city-weather" style="background-image: url(<?php echo plugins_url() . '/city-weather-report/img/' . ${icon} . '.png'; ?>); background-size: contain; background-repeat: no-repeat; background-position: center;">
-				<h3><?php
+			<div class="city-weather" style="background-image: url(<?php echo plugins_url() . '/city-weather-report/img/' . ${icon} . '.png'; ?>); background-size: contain; background-repeat: no-repeat; background-position: center top;">
+				<?php
 					echo $args['before_title'];
 					echo ${location};
-					echo $args['after_title']; ?></h3>
+					echo $args['after_title']; ?>
 				<?php if($options['temp_type'] == 'Fahrenheit') : ?>
 					<h1><?php echo ${temp_f}; ?>°F</h1>
 				<?php elseif($options['temp_type'] == 'Celsius') : ?>
@@ -200,6 +212,11 @@ class City_Weather_Report_Widget extends WP_Widget {
 					<h1><?php echo ${temp_f}; ?>°F / <?php echo ${temp_c}; ?>°C</h1>
 				<?php endif; ?>
 				<!--				<img src="--><?php //echo plugins_url() . '/city-weather-report/img/' . ${icon} . '.png'; ?><!--" alt="--><?php //echo ${weather}; ?><!--"> --><?php //echo ${weather}; ?>
+				<?php if($options['show_realfeel']) : ?>
+					<div class="wcr-realfeel">
+						<strong>Feels Like <?php echo ${feelslike_c}; ?>°C</strong>
+					</div>
+				<?php endif; ?>
 				<?php if($options['show_humidity']) : ?>
 					<div class="wcr-humidity">
 						<strong>Relative Humidity: <?php echo ${relative_humidity}; ?></strong>
@@ -214,28 +231,52 @@ class City_Weather_Report_Widget extends WP_Widget {
 								<div class="col-xs-12">
 									<img src="<?php echo plugins_url() . '/city-weather-report/img/' . $forecastOne['icon'] . '.png'; ?>" alt="">
 								</div>
-								<div class="col-xs-12">
+								<div class="col-xs-6 cwr-high-low">High</div>
+								<div class="col-xs-6 cwr-high-low">Low</div>
+
 									<?php if($options['temp_type'] == 'Fahrenheit') : ?>
-										<?php echo $forecastOne['temp_high_f']; ?> / <?php echo $forecastOne['temp_low_f']; ?>°F
+										<div class="col-xs-6 cwr-high-low-data"><?php echo $forecastOne['temp_high_f']; ?>°F</div>
+										<div class="col-xs-6 cwr-high-low-data"><?php echo $forecastOne['temp_low_f']; ?>°F</div>
 									<?php elseif($options['temp_type'] == 'Celsius') : ?>
-										<?php echo $forecastOne['temp_high_c']; ?> / <?php echo $forecastOne['temp_low_c']; ?>°C
+										<div class="col-xs-6 cwr-high-low-data"><?php echo $forecastOne['temp_high_c']; ?>°C</div>
+										<div class="col-xs-6 cwr-high-low-data"><?php echo $forecastOne['temp_low_c']; ?>°C</div>
 									<?php elseif($options['temp_type'] == 'Both') : ?>
-										<?php echo $forecastOne['temp_high_c']; ?>°C / <?php echo $forecastOne['temp_high_f']; ?>°F
+										<div class="col-xs-6 cwr-high-low-data">
+											<?php echo $forecastOne['temp_high_c']; ?>°C<br>
+											<?php echo $forecastOne['temp_high_f']; ?>°F
+										</div>
+										<div class="col-xs-6 cwr-high-low-data">
+											<?php echo $forecastOne['temp_low_c']; ?>°C<br>
+											<?php echo $forecastOne['temp_low_f']; ?>°F
+										</div>
 									<?php endif; ?>
-								</div>
+
 							</div>
 							<div class="col-xs-4 day">
 								<?php echo $forecastTwo['day']; ?> <?php echo $forecastTwo['month']; ?>
 								<div class="col-xs-12">
 									<img src="<?php echo plugins_url() . '/city-weather-report/img/' . $forecastTwo['icon'] . '.png'; ?>" alt="">
 								</div>
-								<div class="col-xs-12">
+								<div class="row">
+									<div class="col-xs-6 cwr-high-low">High</div>
+									<div class="col-xs-6 cwr-high-low">Low</div>
+
+
 									<?php if($options['temp_type'] == 'Fahrenheit') : ?>
-										<?php echo $forecastTwo['temp_high_f']; ?> / <?php echo $forecastTwo['temp_low_f']; ?>°F
+										<div class="col-xs-6 cwr-high-low-data"><?php echo $forecastTwo['temp_high_f']; ?>°F</div>
+										<div class="col-xs-6 cwr-high-low-data"><?php echo $forecastTwo['temp_low_f']; ?>°F</div>
 									<?php elseif($options['temp_type'] == 'Celsius') : ?>
-										<?php echo $forecastTwo['temp_high_c']; ?> / <?php echo $forecastTwo['temp_low_c']; ?>°C
+										<div class="col-xs-6 cwr-high-low-data"><?php echo $forecastTwo['temp_high_c']; ?>°C</div>
+										<div class="col-xs-6 cwr-high-low-data"><?php echo $forecastTwo['temp_low_c']; ?>°C</div>
 									<?php elseif($options['temp_type'] == 'Both') : ?>
-										<?php echo $forecastTwo['temp_high_c']; ?>°C / <?php echo $forecastTwo['temp_high_f']; ?>°F
+										<div class="col-xs-6 cwr-high-low-data">
+											<?php echo $forecastTwo['temp_high_c']; ?>°C<br>
+											<?php echo $forecastTwo['temp_high_f']; ?>°F
+										</div>
+										<div class="col-xs-6 cwr-high-low-data">
+											<?php echo $forecastTwo['temp_low_c']; ?>°C<br>
+											<?php echo $forecastTwo['temp_low_f']; ?>°F
+										</div>
 									<?php endif; ?>
 								</div>
 							</div>
@@ -244,15 +285,26 @@ class City_Weather_Report_Widget extends WP_Widget {
 								<div class="col-xs-12">
 									<img src="<?php echo plugins_url() . '/city-weather-report/img/' . $forecastThree['icon'] . '.png'; ?>" alt="">
 								</div>
-								<div class="col-xs-12">
+								<div class="col-xs-6 cwr-high-low">High</div>
+								<div class="col-xs-6 cwr-high-low">Low</div>
+
 									<?php if($options['temp_type'] == 'Fahrenheit') : ?>
-										<?php echo $forecastThree['temp_high_f']; ?> / <?php echo $forecastThree['temp_low_f']; ?>°F
+										<div class="col-xs-6 cwr-high-low-data"><?php echo $forecastThree['temp_high_f']; ?>°F</div>
+										<div class="col-xs-6 cwr-high-low-data"><?php echo $forecastThree['temp_low_f']; ?>°F</div>
 									<?php elseif($options['temp_type'] == 'Celsius') : ?>
-										<?php echo $forecastThree['temp_high_c']; ?> / <?php echo $forecastThree['temp_low_c']; ?>°C
+										<div class="col-xs-6 cwr-high-low-data"><?php echo $forecastThree['temp_high_c']; ?>°C</div>
+										<div class="col-xs-6 cwr-high-low-data"><?php echo $forecastThree['temp_low_c']; ?>°C</div>
 									<?php elseif($options['temp_type'] == 'Both') : ?>
-										<?php echo $forecastThree['temp_high_c']; ?>°C / <?php echo $forecastThree['temp_high_f']; ?>°F
+										<div class="col-xs-6 cwr-high-low-data">
+											<?php echo $forecastThree['temp_high_c']; ?>°C<br>
+											<?php echo $forecastThree['temp_high_f']; ?>°F
+										</div>
+										<div class="col-xs-6 cwr-high-low-data">
+											<?php echo $forecastThree['temp_low_c']; ?>°C<br>
+											<?php echo $forecastThree['temp_low_f']; ?>°F
+										</div>
 									<?php endif; ?>
-								</div>
+
 							</div>
 						</div>
 					</div>
